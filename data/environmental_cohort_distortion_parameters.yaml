@@ -1,0 +1,227 @@
+metadata:
+  calibrated_at: '2026-09-24 12:30:00'
+  calibrated_by: autoLUMOS Parametric Distortion Engine (parametric_distortion.py)
+  dataset_title: Brazos River Environmental Particulate Cohort Calibration
+  measurement_dates:
+    earliest: '2025-06-09 17:01:57'
+    latest: '2026-08-22 09:20:52'
+    temporal_summary: Source spectra measured across collection range 2025-06-09 to
+      2026-08-22
+  total_background_spectra: 16
+  total_particle_spectra: 300
+  sources:
+  - source_id: bg_source_1
+    name: 260822_Bkgd_CSVs
+    path: D:\user_data\smolen\260822_Bkgd_CSVs
+    format: Directory of CSV spectral files
+    measured_dates:
+      earliest: '2026-08-22 09:20:51'
+      latest: '2026-08-22 09:20:52'
+    backgrounds_drawn: 16
+    particles_drawn: 0
+    sample_examples:
+    - ftir_1.csv
+    - ftir_10.csv
+    - ftir_11.csv
+    description: Environmental FTIR spectra extracted from 260822_Bkgd_CSVs
+  - source_id: part_source_1
+    name: 250916_Noisy_vs_Interpretable_Spectra_Dataset
+    path: D:\user_data\smolen\250916_Noisy_vs_Interpretable_Spectra_Dataset
+    format: Hierarchical CSV spectral dataset
+    measured_dates:
+      earliest: '2025-06-09 17:01:57'
+      latest: '2025-06-11 14:45:10'
+    backgrounds_drawn: 0
+    particles_drawn: 6897
+    polymers_represented: {}
+    sample_examples:
+    - Brazos_Navasota1_reg10_run1.csv
+    - Brazos_Navasota1_reg10_run4.csv
+    - Brazos_Navasota1_reg11_run1.csv
+    description: Environmental FTIR spectra extracted from 250916_Noisy_vs_Interpretable_Spectra_Dataset
+process_notes:
+  overview: |-
+    This configuration defines empirical and electrodynamic parameter distributions calibrated from
+    authentic microplastic particles and substrate backgrounds for autoLUMOS pipelines. It establishes
+    reproducible forward-physics parameters (Beer-Lambert optical saturation, resonant Mie scattering,
+    Kramers-Kronig anomalous dispersion, active-mask pink instrument noise) and calibrates
+    operational confidence gates for automated microplastic classification.
+  standardized_grid: |-
+    All FTIR spectra are standardized onto a high-resolution 702-channel grid spanning 4000.0 cm^-1
+    to 1196.0 cm^-1 at uniform 4.0 cm^-1 decrements. Standardizing across this standardized grid
+    ensures exact dimensional and feature compatibility with the pre-trained PyTorch 1D-CNN feature
+    extractor (similarity_model_pytorch.pt) and the Open-Set Support Vector Classifier.
+  annular_subtraction_and_clipping: |-
+    Unlike legacy artificial channel-zeroing or opaque filter masks, spectral attenuation and clipping
+    are modeled organically via non-negative annular background subtraction:
+        S_sub(nu) = max(0.0, S_raw(nu) - S_annular(nu))
+    where S_annular is drawn directly from localized annular substrate regions (silt, clay, mineral,
+    and organic filter matrix). When background absorbance meets or exceeds particle signal, the difference
+    smoothly flatlines to zero (zeta_zero), naturally capturing substrate obscuration while preserving
+    authentic polymer peak line shapes in unoccluded spectral windows.
+  physical_inversion_protocol: |-
+    Seven electrodynamic physical components are inverted from each particle-background pair:
+    1. Optical Thickness (tau): Inverted via non-negative least squares (NNLS) fitting against clean polymer
+       reference templates: min_tau ||S_sub - tau * S_clean||^2, modeling Beer-Lambert non-linear saturation.
+    2. Resonant Mie Scattering (rho_0): Scaled amplitude of anomalous dispersion swings governed by
+       van de Hulst anomalous diffraction Q_ext(rho) and Kramers-Kronig refractive index shifts delta_n(nu).
+    3. Signal-to-Noise Ratio (SNR): Robust active-mask noise estimate using Median Absolute Deviation (MAD)
+       of first-order spectral differences across non-zero channels:
+           sigma_noise = 1.4826 * MAD(diff(S_active)) / sqrt(2); SNR = max(S_sub) / sigma_noise.
+    4. Background-to-Signal Ratio (BSR): Ratio of peak annular background absorbance to peak subtracted
+       particle absorbance: max(S_annular) / max(S_sub).
+    5. Substrate Contrast Ratio (SCR): RMS ratio of subtracted particle signal to background:
+       RMS(S_sub) / RMS(S_annular).
+    6. Flatline Zero Fraction (zeta_zero): Proportion of spectral channels where S_sub <= 1e-4 due to
+       complete substrate obscuration.
+    7. Baseline Slope (slope): Dimensionless baseline tilt between high-frequency transparent baseline
+       (3600-3850 cm^-1) and mid-frequency window (2500-2700 cm^-1).
+  composite_distortion_index: |-
+    The Annular-Aware Composite Distortion Index (D_composite) aggregates all five major degradation axes:
+        D_composite = 0.25 * norm(inv_SNR) + 0.25 * norm(rho_0) + 0.20 * norm(BSR)
+                    + 0.20 * norm(zeta_zero) + 0.10 * norm(|slope|)
+    where each component is normalized against its 90th percentile environmental degradation scale.
+    Higher D_composite indicates severe particulate occlusion, Mie distortion, or low SNR.
+  operational_triage_gates: |-
+    Operational triage boundaries calibrated against downstream open-set classifier breakdown:
+    - 90% High-Confidence Acceptance Gate (D_composite <= 0.063, SNR >= 3.0-5.0, rho_0 <= 0.65-1.40):
+      Particles meeting these criteria retain key diagnostic fingerprint peaks and can be reliably
+      classified by automated pipelines without human review.
+    - 50% Critical Breakdown Limit (D_composite >= 0.085):
+      Particles exceeding this distortion index exhibit catastrophic spectral loss or Mie phase
+      reversal, collapsing classification accuracy below 50% and triggering automated flagging for manual review.
+grid:
+  wn_min: 1196.0
+  wn_max: 4000.0
+  wn_step: 4.0
+  n_channels: 702
+background_statistics:
+  num_spectra: 16
+  peak_absorbance:
+    mean: 0.3241
+    std: 0.1848
+    median: 0.2492
+    min: 0.1371
+    max: 0.7757
+  rms_absorbance:
+    mean: 0.2586
+    std: 0.1842
+    median: 0.1876
+  dominant_features:
+  - 'Si-O Silicate / Mineral broad band: 1000 - 1100 cm^-1'
+  - 'Al-OH / Clay lattice hydroxyl stretch: 3600 - 3700 cm^-1'
+  - 'Carbonate vibration: 1420 cm^-1'
+parameter_distributions:
+  tau:
+    mean: 0.3155
+    std: 0.4362
+    median: 0.1056
+    p10: 0.1
+    p90: 0.8216
+    min: 0.1
+    max: 2.5389
+  rho_0:
+    mean: 0.0128
+    std: 0.0153
+    median: 0.005
+    p10: 0.0019
+    p90: 0.0319
+    min: 0.001
+    max: 0.1338
+  snr:
+    mean: 114.2263
+    std: 49.2068
+    median: 150.0
+    p10: 36.2178
+    p90: 150.0
+    min: 1.5
+    max: 150.0
+  bsr:
+    mean: 19.6143
+    std: 66.6
+    median: 3.1286
+    p10: 0.398
+    p90: 25.2017
+    min: 0.0839
+    max: 775.7007
+  scr:
+    mean: 0.7759
+    std: 1.3047
+    median: 0.2418
+    p10: 0.0403
+    p90: 2.032
+    min: 0.0115
+    max: 8.53
+  zeta_zero:
+    mean: 0.1219
+    std: 0.2818
+    median: 0.0
+    p10: 0.0
+    p90: 0.586
+    min: 0.0
+    max: 1.0
+  slope:
+    mean: -0.041
+    std: 0.2428
+    median: -0.0068
+    p10: -0.392
+    p90: 0.2103
+    min: -0.6
+    max: 0.8
+  d_composite:
+    mean: 0.173
+    std: 0.1873
+    median: 0.1147
+    p10: 0.0071
+    p90: 0.4766
+    min: 0.0012
+    max: 0.7529
+tier_thresholds:
+  low_upper: 0.08
+  medium_upper: 0.18
+  high_lower: 0.18
+  confidence_90_gate: 0.063
+  breakdown_50_limit: 0.085
+polymer_specific_thresholds:
+  PET:
+    snr_90: 3.0
+    snr_50: 1.5
+    rho_0_max: 1.4
+    bsr_max: 15.0
+    d_composite_gate_90: 0.063
+    d_composite_limit_50: 0.085
+  Nylon:
+    snr_90: 3.0
+    snr_50: 1.5
+    rho_0_max: 1.0
+    bsr_max: 15.0
+    d_composite_gate_90: 0.063
+    d_composite_limit_50: 0.085
+  PP:
+    snr_90: 1.5
+    snr_50: 1.0
+    rho_0_max: 0.65
+    bsr_max: 10.0
+    d_composite_gate_90: 0.063
+    d_composite_limit_50: 0.085
+  PE:
+    snr_90: 5.0
+    snr_50: 2.0
+    rho_0_max: 1.4
+    bsr_max: 15.0
+    d_composite_gate_90: 0.063
+    d_composite_limit_50: 0.085
+  PVC:
+    snr_90: 5.0
+    snr_50: 2.0
+    rho_0_max: 1.4
+    bsr_max: 15.0
+    d_composite_gate_90: 0.063
+    d_composite_limit_50: 0.085
+  PLA:
+    snr_90: 4.0
+    snr_50: 2.0
+    rho_0_max: 0.9
+    bsr_max: 12.0
+    d_composite_gate_90: 0.063
+    d_composite_limit_50: 0.085

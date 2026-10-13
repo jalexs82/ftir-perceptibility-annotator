@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FTIR Feature Perceptibility & Discriminatory Power Study</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --accent: #58a6ff;
+      --accent-yellow: #facc15;
+      --accent-green: #3fb950;
+      --accent-orange: #d29922;
+      --accent-red: #f85149;
+      --accent-purple: #bc8cff;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.5;
+      padding: 16px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-title h1 {
+      font-size: 1.32rem;
+      color: var(--text-bright);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-title p {
+      font-size: 0.82rem;
+      color: #8b949e;
+    }
+    .stats-badge {
+      background-color: #21262d;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.84rem;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .stats-badge span b {
+      color: var(--accent-green);
+    }
+
+    .app-layout {
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 16px;
+    }
+    @media (max-width: 1100px) {
+      .app-layout { grid-template-columns: 1fr; }
+    }
+
+    .main-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .card-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 280px;
+      width: 100%;
+      transition: height 0.2s ease;
+    }
+    .chart-container.zoomed {
+      height: 380px;
+    }
+
+    .graph-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+    }
+    .graph-btn {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--text-bright);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .graph-btn:hover {
+      background: #30363d;
+      border-color: var(--accent);
+    }
+    .graph-btn.active {
+      background: rgba(250, 204, 21, 0.2);
+      border-color: var(--accent-yellow);
+      color: var(--accent-yellow);
+    }
+
+    /* Target Feature Banner */
+    .target-feature-banner {
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.10) 0%, rgba(88, 166, 255, 0.06) 100%);
+      border: 1px solid rgba(250, 204, 21, 0.45);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .target-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .target-name {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: var(--accent-yellow);
+    }
+    .target-badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .target-poly {
+      background: #21262d;
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-purple);
+    }
+    .family-badge {
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.73rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      background: rgba(250, 204, 21, 0.16);
+      border: 1px solid var(--accent-yellow);
+      color: var(--accent-yellow);
+    }
+    .spurious-badge {
+      background: rgba(248, 81, 73, 0.2);
+      border: 1px solid var(--accent-red);
+      color: #ff7b72;
+    }
+
+    /* What this feature distinguishes box */
+    .distinguishes-box {
+      background: rgba(88, 166, 255, 0.08);
+      border-left: 3px solid var(--accent);
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 8px 0;
+      font-size: 0.84rem;
+      color: #e6edf3;
+    }
+
+    .diagnostic-question-box {
+      background: #1c2128;
+      border-left: 3px solid var(--accent-yellow);
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 8px 0;
+      font-size: 0.85rem;
+      color: #fef08a;
+    }
+
+    .cues-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed rgba(250, 204, 21, 0.35);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 8px 0 4px 0;
+      font-size: 0.79rem;
+      color: #c9d1d9;
+    }
+    .cues-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-yellow);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .cues-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .cues-list li::before {
+      content: "🟡 ";
+      font-size: 0.7rem;
+    }
+
+    /* Reference Legend Bar (Clean non-clickable visual key) */
+    .peaks-legend-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: #8b949e;
+      align-items: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .peak-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+    .peak-dot-target { background: #facc15; box-shadow: 0 0 6px #facc15; border: 1px solid #fef08a; }
+    .peak-dot-primary { background: rgba(63, 185, 80, 0.6); border: 1px solid #3fb950; }
+    .peak-dot-negative { background: rgba(248, 81, 73, 0.6); border: 1px solid #f85149; }
+
+    /* Interactive Slider Area */
+    .slider-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .slider-val-tag {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: var(--accent-yellow);
+      font-family: monospace;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: #21262d;
+      height: 10px;
+      border-radius: 5px;
+      outline: none;
+      border: 1px solid var(--border);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent-yellow);
+      cursor: pointer;
+      border: 2px solid #0d1117;
+      box-shadow: 0 0 8px rgba(250, 204, 21, 0.7);
+    }
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      color: #8b949e;
+    }
+
+    /* Controls & Buttons */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .control-group label {
+      font-size: 0.76rem;
+      color: #8b949e;
+      font-weight: 600;
+    }
+    select, button {
+      font-family: var(--font);
+      font-size: 0.83rem;
+      border-radius: 6px;
+      padding: 7px 10px;
+      background-color: #21262d;
+      color: var(--text-bright);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    select:hover, button:hover {
+      border-color: #8b949e;
+    }
+
+    .workflow-lock-bar {
+      background: rgba(250, 204, 21, 0.08);
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+    .workflow-lock-bar label {
+      color: var(--text-bright);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .record-buttons-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .btn-record {
+      background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 0.94rem;
+      font-weight: bold;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+      cursor: pointer;
+    }
+    .btn-record:hover {
+      background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%);
+    }
+
+    .btn-no-degrade {
+      background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: bold;
+      width: 100%;
+      box-shadow: 0 4px 10px rgba(56, 139, 253, 0.25);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-no-degrade:hover {
+      background: linear-gradient(135deg, #388bfd 0%, #58a6ff 100%);
+    }
+
+    .btn-next {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--text-bright);
+      padding: 8px;
+      border-radius: 6px;
+      width: 100%;
+      font-size: 0.82rem;
+    }
+    .btn-next:hover {
+      background: #30363d;
+      border-color: #8b949e;
+    }
+
+    /* Parameter Monitor Box */
+    .param-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .param-item {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+    .param-lbl {
+      font-size: 0.7rem;
+      color: #8b949e;
+    }
+    .param-val {
+      font-size: 0.88rem;
+      font-weight: bold;
+      color: var(--accent);
+      font-family: monospace;
+    }
+
+    /* Blind / Model Probability Box */
+    .model-box {
+      border-left: 3px solid var(--accent-purple);
+      padding-left: 10px;
+    }
+    .model-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .reveal-toggle {
+      font-size: 0.75rem;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .prob-bar-bg {
+      background: #0d1117;
+      border-radius: 4px;
+      height: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .prob-bar-fill {
+      background: linear-gradient(90deg, #3fb950 0%, #d29922 60%, #f85149 100%);
+      height: 100%;
+      width: 0%;
+      transition: width 0.1s;
+    }
+    .prob-num {
+      font-size: 0.8rem;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    .key-badge {
+      display: inline-block;
+      background: #30363d;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-family: monospace;
+      color: #e6edf3;
+      margin: 0 2px;
+    }
+
+    /* History & Tally Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-dialog {
+      background: #161b22;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 92%;
+      max-width: 980px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 14px 18px;
+      background: #21262d;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 {
+      font-size: 1.15rem;
+      color: var(--text-bright);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      font-size: 1.3rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .modal-close-btn:hover {
+      color: #f0f6fc;
+      background: #30363d;
+    }
+    .modal-body {
+      padding: 18px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .tally-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+    }
+    .tally-card {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .tally-card-title {
+      font-size: 0.74rem;
+      color: #8b949e;
+      font-weight: 600;
+      word-break: break-word;
+    }
+    .tally-card-val {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--accent-yellow);
+      font-family: monospace;
+    }
+    .tally-card-sub {
+      font-size: 0.7rem;
+      color: #8b949e;
+    }
+    .review-table-wrapper {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      max-height: 380px;
+      overflow-y: auto;
+      background: #0d1117;
+    }
+    .review-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      text-align: left;
+    }
+    .review-table th {
+      position: sticky;
+      top: 0;
+      background: #21262d;
+      padding: 8px 10px;
+      color: var(--text-bright);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+    .review-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #21262d;
+      color: #c9d1d9;
+    }
+    .review-table tr:hover td {
+      background: rgba(88, 166, 255, 0.05);
+    }
+    .row-anomaly {
+      background: rgba(248, 81, 73, 0.12) !important;
+    }
+    .row-anomaly td {
+      color: #f85149 !important;
+    }
+    .btn-delete-row {
+      background: rgba(248, 81, 73, 0.15);
+      border: 1px solid rgba(248, 81, 73, 0.4);
+      color: #ff7b72;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      cursor: pointer;
+    }
+    .btn-delete-row:hover {
+      background: #f85149;
+      color: #fff;
+    }
+    .btn-review-trigger {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--text-bright);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-review-trigger:hover {
+      background: #30363d;
+      border-color: var(--accent-yellow);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">
+      <h1>🔬 FTIR Feature Perceptibility & Discriminatory Power Study</h1>
+      <p>Calibrated Environmental Forward Physics & Diagnostic Feature Hierarchy ($4000\text{--}1200\text{ cm}^{-1}$)</p>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button class="btn-review-trigger" id="btn-open-review">
+        <span>📋 Review Trials & Tallies</span>
+      </button>
+      <div class="stats-badge">
+        <span>Current Feature: <b id="stat-feat-session" style="color:var(--accent-yellow)">PE_CH2_doublet (0)</b></span>
+        <span>Total Saved: <b id="stat-count">0</b></span>
+        <span>Mode: <b id="stat-mode" style="color:var(--accent-orange)">compound</b></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Review and Tally Modal Dialog -->
+  <div class="modal-overlay" id="review-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2><span>📊 Perceptibility Dataset Tallies & Trial Review</span></h2>
+        <button class="modal-close-btn" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div style="font-size:0.84rem; font-weight:600; color:#8b949e; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Summary Tallies by Diagnostic Feature</div>
+          <div class="tally-grid" id="modal-tally-grid"></div>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:0.84rem; font-weight:600; color:#8b949e; text-transform:uppercase; letter-spacing:0.5px;">Recorded Trial Log (Recent entries)</div>
+            <span style="font-size:0.75rem; color:#8b949e;">Click 🗑️ to delete accidental recordings (e.g. t = 0.0)</span>
+          </div>
+          <div class="review-table-wrapper">
+            <table class="review-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Feature</th>
+                  <th>Polymer</th>
+                  <th>Mode</th>
+                  <th>Outcome</th>
+                  <th>t Boundary</th>
+                  <th>Physics (SNR / Mie / BSR)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="modal-review-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-layout">
+    <!-- Main Spectral Visualization Panels -->
+    <div class="main-panel">
+      <!-- Target Feature Prompt -->
+      <div class="target-feature-banner">
+        <div class="target-header">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+              <span style="font-size: 0.75rem; text-transform: uppercase; color:#8b949e; letter-spacing: 0.5px;">Polymer Group:</span>
+              <span class="family-badge" id="disp-family-badge">Polyolefins (PE & PP)</span>
+            </div>
+            <div class="target-name" id="disp-feature-name">PE Aliphatic CH₂ Asymmetric/Symmetric Doublet</div>
+          </div>
+          <div class="target-badges">
+            <div class="target-poly" id="disp-poly">Drawn Polymer: PE</div>
+            <div class="target-poly" id="disp-confounders" style="color:#8b949e; font-weight:normal;">Confounders: PP, Nylon</div>
+          </div>
+        </div>
+
+        <!-- What this feature distinguishes -->
+        <div class="distinguishes-box">
+          <b>🔍 What This Feature Distinguishes:</b> <span id="disp-distinguishes">Loading...</span>
+        </div>
+
+        <!-- Psychological Question -->
+        <div class="diagnostic-question-box">
+          <b>🎯 Annotation Objective:</b> <span id="disp-question">Can you clearly perceive the feature highlighted in yellow?</span>
+        </div>
+
+        <!-- Visual Cues Box -->
+        <div class="cues-box">
+          <div class="cues-title">Visual Cues to Inspect in the Yellow Highlighted Region:</div>
+          <ul class="cues-list" id="disp-cues-list"></ul>
+        </div>
+
+        <!-- Clean Visual Key Legend (No confusing peak-jump buttons) -->
+        <div class="peaks-legend-bar">
+          <div class="legend-item">
+            <span class="peak-dot peak-dot-target"></span>
+            <span style="color:#fef08a; font-weight:600;">Yellow Highlight Corridor = Current Peak / Combination of Interest</span>
+          </div>
+          <div class="legend-item">
+            <span class="peak-dot peak-dot-primary"></span>
+            <span>Green Corridor = Companion Polymer Band</span>
+          </div>
+          <div class="legend-item">
+            <span class="peak-dot peak-dot-negative"></span>
+            <span>Red Corridor = Negative / Absent Discriminator</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slider Degradation Controller -->
+      <div class="card slider-card">
+        <div class="slider-header">
+          <label id="lbl-slider-title">Sweep Degradation / Interference Trajectory (t ∈ [0.0, 1.0]) — Use Left/Right Arrow Keys</label>
+          <div class="slider-val-tag">t = <span id="disp-t">0.000</span></div>
+        </div>
+        <input type="range" id="slider-t" min="0" max="1" step="0.005" value="0">
+        <div class="slider-ticks">
+          <span>0.0 (Pristine Reference)</span>
+          <span>0.5 (Moderate Environmental Distortion / Interference)</span>
+          <span>1.0 (Severe Breakdown / Max Spurious Intrusion)</span>
+        </div>
+      </div>
+
+      <!-- Full Spectrum Chart -->
+      <div class="card">
+        <div class="card-title">
+          <span>Mid-IR Full Absorbance Spectrum (Compressed Axis, $4000\text{--}1200\text{ cm}^{-1}$)</span>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="graph-toolbar">
+              <span style="color:#8b949e; font-size:0.72rem;">Height:</span>
+              <button class="graph-btn" id="btn-full-h-down">-</button>
+              <button class="graph-btn" id="btn-full-h-up">+</button>
+            </div>
+            <div style="font-size:0.75rem; color:#8b949e; font-weight:normal; display:flex; gap:10px;">
+              <label style="cursor:pointer;"><input type="checkbox" id="chk-clean-show" checked style="vertical-align:middle;"> Pristine Ref</label>
+              <label style="cursor:pointer;"><input type="checkbox" id="chk-corridors-show" checked style="vertical-align:middle;"> Highlight Corridors</label>
+              <label style="cursor:pointer;"><input type="checkbox" id="chk-bg-show" style="vertical-align:middle;"> Annular BG</label>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container" id="container-chart-full">
+          <canvas id="chart-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Zoomed Diagnostic Window Chart -->
+      <div class="card">
+        <div class="card-title">
+          <span>Zoomed Diagnostic Feature Window (<span id="disp-zoom-range" style="color:var(--accent-yellow)">2750–3050 cm⁻¹</span>)</span>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="graph-toolbar">
+              <span style="color:#8b949e; font-size:0.72rem;">Height:</span>
+              <button class="graph-btn" id="btn-zoom-h-down" title="Decrease vertical height">-</button>
+              <button class="graph-btn" id="btn-zoom-h-up" title="Increase vertical height">+</button>
+              <button class="graph-btn" id="btn-zoom-h-tall" title="Make tall view">Tall (480px)</button>
+              <span style="color:#8b949e; font-size:0.72rem; margin-left:6px;">Y-Axis:</span>
+              <button class="graph-btn active" id="btn-zoom-autoy" title="Auto-scale Y to peak height">Auto Y</button>
+              <button class="graph-btn" id="btn-zoom-fixedy" title="Fixed 0 to 1.25 Y">Fixed Y</button>
+            </div>
+            <div style="font-size:0.75rem; color:#8b949e; font-weight:normal; display:flex; gap:10px;">
+              <label style="cursor:pointer;"><input type="checkbox" id="chk-zoom-clean-show" checked style="vertical-align:middle;"> Pristine Ref</label>
+              <label style="cursor:pointer;"><input type="checkbox" id="chk-d2-show" checked style="vertical-align:middle;"> 2nd Deriv (d²A)</label>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container zoomed" id="container-chart-zoom">
+          <canvas id="chart-zoom"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side Control & Metrics Panel -->
+    <div class="side-panel">
+      <!-- Hierarchical Polymer Group -> Feature Selection -->
+      <div class="card">
+        <div class="card-title">1. Select Polymer Group & Diagnostic Feature</div>
+
+        <div class="workflow-lock-bar">
+          <label>
+            <input type="checkbox" id="chk-lock-feature" checked style="vertical-align:middle;">
+            🔒 Lock Current Feature Across Trajectories
+          </label>
+        </div>
+
+        <div class="control-group" style="margin-bottom:10px;">
+          <label>Polymer Group / Category</label>
+          <select id="sel-family">
+            <!-- Populated dynamically from /api/taxonomy -->
+          </select>
+        </div>
+
+        <div class="control-group" style="margin-bottom:10px;">
+          <label>Peak / Peak Combination of Interest</label>
+          <select id="sel-feature">
+            <!-- Populated dynamically based on Polymer Group -->
+          </select>
+        </div>
+
+        <div class="controls-grid" style="margin-bottom:10px;">
+          <div class="control-group">
+            <label>Degradation Trajectory Mode</label>
+            <select id="sel-mode">
+              <option value="random">🔀 Cycle Realistic Modes</option>
+              <option value="compound">Compound Environmental</option>
+              <option value="under_subtracted">Under-Subtracted (Mineral Bleed)</option>
+              <option value="over_subtracted">Over-Subtracted (Negative Trough)</option>
+              <option value="peak_saturation">Thick Particle Peak Saturation</option>
+              <option value="biofilm_hydration">Biofilm & Hydration Overlap</option>
+              <option value="spurious_intrusion">Spurious Peak Intrusion</option>
+              <option value="pure_noise">Pure Pink Noise</option>
+              <option value="pure_mie">Pure Mie Scattering</option>
+              <option value="pure_background">Pure Annular Coupling</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Drawn Polymer Spectrum</label>
+            <input type="text" id="disp-drawn-polymer-box" readonly value="PE (Auto-drawn)" style="background:#0d1117; border:1px solid var(--border); color:var(--accent-purple); padding:7px 10px; border-radius:6px; font-weight:bold; font-size:0.82rem;">
+          </div>
+        </div>
+
+        <!-- Annotation Action Buttons Stack -->
+        <div class="record-buttons-stack">
+          <button class="btn-record" id="btn-record">
+            🚩 Record Perceptual Cutoff at Current <span id="lbl-record-t">t=0.00</span>
+          </button>
+
+          <button class="btn-no-degrade" id="btn-no-degrade">
+            🛡️ Does Not Degrade (Feature Stays Observable at t=1.0)
+          </button>
+
+          <p style="font-size:0.74rem; color:#8b949e; text-align:center; margin-top:2px;">
+            Keys: <span class="key-badge">←</span> <span class="key-badge">→</span> Slide t | <span class="key-badge">Space</span> Record Cutoff | <span class="key-badge">D</span> Does Not Degrade
+          </p>
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button class="btn-next" id="btn-next-trajectory">🔄 New Trajectory (Same Feature)</button>
+          <button class="btn-next" id="btn-switch-feature">🎲 Next Feature in Group</button>
+        </div>
+      </div>
+
+      <!-- Physical Parameters Monitor -->
+      <div class="card">
+        <div class="card-title">Forward Physics Parameters</div>
+        <div class="param-grid">
+          <div class="param-item">
+            <div class="param-lbl">Peak SNR</div>
+            <div class="param-val" id="val-snr">--</div>
+          </div>
+          <div class="param-item">
+            <div class="param-lbl">Mie Swing (ρ₀)</div>
+            <div class="param-val" id="val-rho">--</div>
+          </div>
+          <div class="param-item">
+            <div class="param-lbl">Annular BSR</div>
+            <div class="param-val" id="val-bsr">--</div>
+          </div>
+          <div class="param-item">
+            <div class="param-lbl">Zero-Clip Ratio (ζ₀)</div>
+            <div class="param-val" id="val-zeta">--</div>
+          </div>
+          <div class="param-item">
+            <div class="param-lbl">Optical Thickness (τ)</div>
+            <div class="param-val" id="val-tau">--</div>
+          </div>
+          <div class="param-item">
+            <div class="param-lbl">Subtraction Ratio (β)</div>
+            <div class="param-val" id="val-sub-ratio" style="color:#e3b341;">1.00</div>
+          </div>
+          <div class="param-item">
+            <div class="param-lbl">Peak Saturation</div>
+            <div class="param-val" id="val-sat-factor" style="color:#f85149;">0.0%</div>
+          </div>
+          <div class="param-item">
+            <div class="param-lbl">Biofilm / Spurious</div>
+            <div class="param-val" id="val-biofilm" style="color:#56d364;">0.00</div>
+          </div>
+        </div>
+        <div style="font-size:0.72rem; color:#8b949e; margin-top:8px; display:flex; justify-content:space-between;">
+          <span>Sampled Background: <b id="val-bg-name" style="color:#79c0ff; font-family:monospace;">--</b></span>
+          <span id="val-sub-status">Balanced</span>
+        </div>
+      </div>
+
+      <!-- Neural Model Live Inference Monitor -->
+      <div class="card model-box">
+        <div class="model-header">
+          <div class="card-title" style="margin-bottom:0;">Neural Model Probability</div>
+          <div class="reveal-toggle" id="btn-toggle-blind">Reveal Model Score</div>
+        </div>
+
+        <div id="blind-warning" style="font-size:0.8rem; color:#8b949e; margin-bottom:8px;">
+          🙈 Hidden during psychophysical testing to avoid bias.
+        </div>
+
+        <div id="model-metrics-area" style="display:none;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.82rem;">
+            <span>Target Feature Probability:</span>
+            <span class="prob-num" id="val-prob">--%</span>
+          </div>
+          <div class="prob-bar-bg">
+            <div class="prob-bar-fill" id="prob-bar"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#8b949e;">
+            <span>Physical Contrast Score:</span>
+            <span id="val-phys-score">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Full Taxonomy loaded from server
+    let taxonomyFamilies = {};
+    let taxonomyFeatures = {};
+
+    let currentTrial = {
+      family: 'Polyolefins (PE & PP)',
+      target_feature: 'PE_CH2_doublet',
+      polymer: 'PE',
+      mode: 'compound',
+      seed: 1234,
+      bg_idx: 42,
+      t: 0.0,
+      feature_window: [2750.0, 3050.0],
+      target_ranges: [[2900.0, 2932.0], [2835.0, 2862.0]],
+      is_spurious_test: false,
+      important_peaks: [],
+      clean_reference_absorbance: null
+    };
+
+    let sessionTrialCounts = {};
+    let latestSynthesis = null;
+    let isModelRevealed = false;
+    let showCorridors = true;
+    let autoYScaleZoom = true;
+    let debounceTimer = null;
+
+    let chartFull = null;
+    let chartZoom = null;
+
+    function compressWn(wn) {
+      if (wn >= 2000.0) {
+        return (4000.0 - wn) / 1000.0;
+      }
+      return 2.0 + (2000.0 - wn) / 200.0;
+    }
+
+    function isPeakInTargetRanges(wn, range) {
+      const tRanges = currentTrial.target_ranges || [];
+      for (const tr of tRanges) {
+        if (wn >= tr[0] - 8 && wn <= tr[1] + 8) return true;
+      }
+      return false;
+    }
+
+    // Chart.js Plugin to draw vivid YELLOW highlight corridors for the target peak(s) of interest
+    const peakHighlightPlugin = {
+      id: 'peakHighlightPlugin',
+      beforeDraw: (chart) => {
+        if (!showCorridors) return;
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y || chart.scales.yAbs;
+        if (!xAxis || !yAxis) return;
+
+        ctx.save();
+        const isFull = (chart.canvas.id === 'chart-full');
+
+        // 1. Draw companion polymer peaks (subtle green/red)
+        if (currentTrial.important_peaks) {
+          currentTrial.important_peaks.forEach(peak => {
+            if (isPeakInTargetRanges(peak.wn, peak.range)) return; // Drawn brightly in step 2
+
+            let x1_pixel, x2_pixel;
+            if (isFull) {
+              x1_pixel = xAxis.getPixelForValue(compressWn(peak.range[1]));
+              x2_pixel = xAxis.getPixelForValue(compressWn(peak.range[0]));
+            } else {
+              x1_pixel = xAxis.getPixelForValue(peak.range[1]);
+              x2_pixel = xAxis.getPixelForValue(peak.range[0]);
+            }
+            if (isNaN(x1_pixel) || isNaN(x2_pixel)) return;
+
+            const left = Math.min(x1_pixel, x2_pixel);
+            const width = Math.abs(x2_pixel - x1_pixel);
+            if (left + width < xAxis.left || left > xAxis.right) return;
+
+            let fillColor = 'rgba(63, 185, 80, 0.07)';
+            let strokeColor = 'rgba(63, 185, 80, 0.35)';
+            if (peak.tier && peak.tier.includes('Negative')) {
+              fillColor = 'rgba(248, 81, 73, 0.07)';
+              strokeColor = 'rgba(248, 81, 73, 0.35)';
+            }
+
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(left, yAxis.top, width, yAxis.bottom - yAxis.top);
+
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+            ctx.moveTo(left + width / 2, yAxis.top);
+            ctx.lineTo(left + width / 2, yAxis.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${Math.round(peak.wn)}`, left + width / 2, yAxis.top + 12);
+          });
+        }
+
+        // 2. Draw VIVID YELLOW Target Feature Corridors (#facc15)
+        const targetRanges = currentTrial.target_ranges || [];
+        targetRanges.forEach(tr => {
+          let x1_pixel, x2_pixel;
+          if (isFull) {
+            x1_pixel = xAxis.getPixelForValue(compressWn(tr[1]));
+            x2_pixel = xAxis.getPixelForValue(compressWn(tr[0]));
+          } else {
+            x1_pixel = xAxis.getPixelForValue(tr[1]);
+            x2_pixel = xAxis.getPixelForValue(tr[0]);
+          }
+          if (isNaN(x1_pixel) || isNaN(x2_pixel)) return;
+
+          const left = Math.min(x1_pixel, x2_pixel);
+          const width = Math.max(6, Math.abs(x2_pixel - x1_pixel));
+          if (left + width < xAxis.left || left > xAxis.right) return;
+
+          // Bright Yellow highlight band
+          ctx.fillStyle = 'rgba(250, 204, 21, 0.22)';
+          ctx.fillRect(left, yAxis.top, width, yAxis.bottom - yAxis.top);
+
+          // Border lines on corridor edges
+          ctx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(left, yAxis.top, width, yAxis.bottom - yAxis.top);
+
+          // Center guideline in bright yellow
+          const centerWn = 0.5 * (tr[0] + tr[1]);
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(left + width / 2, yAxis.top);
+          ctx.lineTo(left + width / 2, yAxis.bottom);
+          ctx.stroke();
+
+          // Bright yellow wavenumber tag at top
+          ctx.fillStyle = '#fef08a';
+          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+          ctx.textAlign = 'center';
+          ctx.fillText(`★ ${Math.round(centerWn)} cm⁻¹`, left + width / 2, yAxis.top + 14);
+        });
+
+        ctx.restore();
+      }
+    };
+
+    function initCharts() {
+      const ctxFull = document.getElementById('chart-full').getContext('2d');
+      chartFull = new Chart(ctxFull, {
+        type: 'line',
+        plugins: [peakHighlightPlugin],
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Sample Absorbance (Subtracted)',
+              borderColor: '#58a6ff',
+              backgroundColor: 'rgba(88, 166, 255, 0.08)',
+              borderWidth: 1.7,
+              pointRadius: 0,
+              data: [],
+              fill: false
+            },
+            {
+              label: 'Reference (Pristine)',
+              borderColor: 'rgba(63, 185, 80, 0.65)',
+              borderWidth: 1.2,
+              borderDash: [3, 3],
+              pointRadius: 0,
+              data: [],
+              fill: false,
+              hidden: false
+            },
+            {
+              label: 'Annular Background',
+              borderColor: 'rgba(210, 153, 34, 0.65)',
+              borderWidth: 1,
+              borderDash: [2, 2],
+              pointRadius: 0,
+              data: [],
+              hidden: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: {
+              type: 'linear',
+              min: 0.0,
+              max: 6.05,
+              ticks: {
+                color: '#8b949e',
+                font: { size: 10 },
+                stepSize: 0.5,
+                callback: function(val) {
+                  if (val <= 2.001) {
+                    return Math.round(4000 - val * 1000);
+                  } else {
+                    return Math.round(2000 - (val - 2.0) * 200);
+                  }
+                }
+              },
+              grid: { color: '#21262d' }
+            },
+            y: {
+              min: -0.05,
+              max: 1.25,
+              ticks: { color: '#8b949e', font: { size: 10 } },
+              grid: { color: '#21262d' }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#c9d1d9', font: { size: 10 }, boxWidth: 12 }
+            },
+            tooltip: {
+              callbacks: {
+                title: function(items) {
+                  if (!items.length) return '';
+                  const val = items[0].parsed.x;
+                  let wn = val <= 2.001 ? Math.round(4000 - val * 1000) : Math.round(2000 - (val - 2.0) * 200);
+                  return `${wn} cm⁻¹`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      const ctxZoom = document.getElementById('chart-zoom').getContext('2d');
+      chartZoom = new Chart(ctxZoom, {
+        type: 'line',
+        plugins: [peakHighlightPlugin],
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Feature Absorbance',
+              yAxisID: 'yAbs',
+              borderColor: '#58a6ff',
+              borderWidth: 2.3,
+              pointRadius: 0,
+              data: []
+            },
+            {
+              label: 'Reference (Pristine)',
+              yAxisID: 'yAbs',
+              borderColor: 'rgba(63, 185, 80, 0.75)',
+              borderWidth: 1.4,
+              borderDash: [3, 3],
+              pointRadius: 0,
+              data: []
+            },
+            {
+              label: '2nd Derivative (d²A/dν²)',
+              yAxisID: 'yD2',
+              borderColor: '#bc8cff',
+              borderWidth: 1.3,
+              pointRadius: 0,
+              borderDash: [2, 2],
+              data: []
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: {
+              type: 'linear',
+              reverse: true,
+              min: 2750,
+              max: 3050,
+              ticks: { color: '#8b949e', font: { size: 11 } },
+              grid: { color: '#21262d' }
+            },
+            yAbs: {
+              position: 'left',
+              min: -0.05,
+              max: 1.25,
+              ticks: { color: '#58a6ff', font: { size: 11 } },
+              grid: { color: '#21262d' }
+            },
+            yD2: {
+              position: 'right',
+              min: -1.1,
+              max: 1.1,
+              ticks: { color: '#bc8cff', font: { size: 10 } },
+              grid: { drawOnChartArea: false }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#c9d1d9', font: { size: 11 }, boxWidth: 12 }
+            },
+            tooltip: { enabled: false }
+          }
+        }
+      });
+    }
+
+    function renderVisualCues(cues) {
+      const list = document.getElementById('disp-cues-list');
+      list.innerHTML = '';
+      if (!cues || cues.length === 0) {
+        list.innerHTML = '<li>Observe peak inflection, trough depth, and 2nd derivative in the yellow corridor.</li>';
+        return;
+      }
+      cues.forEach(cue => {
+        const li = document.createElement('li');
+        li.innerText = cue;
+        list.appendChild(li);
+      });
+    }
+
+    async function initTaxonomyDropdowns() {
+      const resp = await fetch('/api/taxonomy');
+      const data = await resp.json();
+      taxonomyFamilies = data.families;
+      taxonomyFeatures = data.features;
+
+      const selFamily = document.getElementById('sel-family');
+      selFamily.innerHTML = '';
+      Object.keys(taxonomyFamilies).forEach(famName => {
+        const opt = document.createElement('option');
+        opt.value = famName;
+        opt.innerText = famName;
+        selFamily.appendChild(opt);
+      });
+
+      populateFeaturesForFamily(selFamily.value);
+    }
+
+    function populateFeaturesForFamily(famName, selectedFeatKey = null) {
+      const selFeature = document.getElementById('sel-feature');
+      selFeature.innerHTML = '';
+      const list = taxonomyFamilies[famName] || [];
+      list.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.key;
+        opt.innerText = f.title;
+        selFeature.appendChild(opt);
+      });
+      if (selectedFeatKey && list.some(x => x.key === selectedFeatKey)) {
+        selFeature.value = selectedFeatKey;
+      }
+    }
+
+    async function loadTrial(options = {}) {
+      const isLocked = document.getElementById('chk-lock-feature').checked;
+      let url = '/api/trial';
+      const params = new URLSearchParams();
+
+      if (options.nextInGroup) {
+        // Advance to the next feature in the currently selected family
+        const famList = taxonomyFamilies[currentTrial.family] || [];
+        if (famList.length > 0) {
+          const idx = famList.findIndex(x => x.key === currentTrial.target_feature);
+          const nextFeat = famList[(idx + 1) % famList.length].key;
+          currentTrial.target_feature = nextFeat;
+          document.getElementById('sel-feature').value = nextFeat;
+        }
+        params.append('feature', currentTrial.target_feature);
+      } else if (options.lockFeature || isLocked) {
+        params.append('feature', currentTrial.target_feature);
+      }
+
+      const selModeVal = document.getElementById('sel-mode').value;
+      if (selModeVal !== 'random') {
+        params.append('mode', selModeVal);
+      }
+
+      if (params.toString()) {
+        url += '?' + params.toString();
+      }
+
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+
+        currentTrial.family = data.family;
+        currentTrial.target_feature = data.target_feature;
+        currentTrial.polymer = data.polymer;
+        currentTrial.mode = data.mode;
+        currentTrial.seed = data.seed;
+        currentTrial.bg_idx = data.bg_idx;
+        currentTrial.feature_window = data.feature_window;
+        currentTrial.target_ranges = data.target_ranges || [];
+        currentTrial.is_spurious_test = Boolean(data.is_spurious_test);
+        currentTrial.important_peaks = data.important_peaks || [];
+        currentTrial.clean_reference_absorbance = data.clean_reference_absorbance || null;
+        currentTrial.t = 0.0;
+
+        // Sync dropdowns
+        document.getElementById('sel-family').value = data.family;
+        populateFeaturesForFamily(data.family, data.target_feature);
+        document.getElementById('slider-t').value = 0.0;
+
+        // Update Banner Info
+        const famBadge = document.getElementById('disp-family-badge');
+        famBadge.innerText = data.family;
+        if (currentTrial.is_spurious_test) {
+          famBadge.classList.add('spurious-badge');
+        } else {
+          famBadge.classList.remove('spurious-badge');
+        }
+
+        document.getElementById('disp-feature-name').innerText = data.feature_title || data.target_feature;
+        document.getElementById('disp-distinguishes').innerText = data.distinguishes || "";
+        document.getElementById('disp-question').innerText = data.diagnostic_question || "";
+        document.getElementById('disp-poly').innerText = `Drawn Polymer: ${data.polymer}`;
+        document.getElementById('disp-drawn-polymer-box').value = `${data.polymer} (from [${(data.candidate_polymers || [data.polymer]).join(', ')}])`;
+        document.getElementById('disp-confounders').innerText = `Distinguishes vs: ${(data.confounders || []).join(', ')}`;
+        document.getElementById('stat-mode').innerText = data.mode;
+
+        // Update Button labels if Spurious Test vs Disappearance Test
+        const btnRec = document.getElementById('btn-record');
+        const btnDnd = document.getElementById('btn-no-degrade');
+        if (currentTrial.is_spurious_test) {
+          btnRec.innerHTML = `⚠️ Record Spurious Peak Appearance at <span id="lbl-record-t">t=0.00</span>`;
+          btnDnd.innerHTML = `🛡️ No False Positive (Spurious Peak Never Appears Convincing)`;
+        } else {
+          btnRec.innerHTML = `🚩 Record Perceptual Cutoff at Current <span id="lbl-record-t">t=0.00</span>`;
+          btnDnd.innerHTML = `🛡️ Does Not Degrade (Feature Stays Observable at t=1.0)`;
+        }
+
+        const countForThisFeat = sessionTrialCounts[data.target_feature] || 0;
+        document.getElementById('stat-feat-session').innerText = `${data.target_feature} (${countForThisFeat})`;
+
+        renderVisualCues(data.visual_cues);
+        setBlindState(false);
+
+        await synthesizeAndRender();
+      } catch (err) {
+        console.error("Error loading trial:", err);
+      }
+    }
+
+    async function synthesizeAndRender() {
+      const tVal = parseFloat(document.getElementById('slider-t').value);
+      currentTrial.t = tVal;
+      document.getElementById('disp-t').innerText = tVal.toFixed(3);
+      const lblRec = document.getElementById('lbl-record-t');
+      if (lblRec) lblRec.innerText = `t=${tVal.toFixed(2)}`;
+
+      try {
+        const resp = await fetch('/api/synthesize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            polymer: currentTrial.polymer,
+            t: currentTrial.t,
+            mode: currentTrial.mode,
+            seed: currentTrial.seed,
+            bg_idx: currentTrial.bg_idx,
+            target_feature: currentTrial.target_feature
+          })
+        });
+
+        latestSynthesis = await resp.json();
+        if (latestSynthesis.important_peaks) {
+          currentTrial.important_peaks = latestSynthesis.important_peaks;
+        }
+        updateUIWithSynthesis(latestSynthesis);
+      } catch (err) {
+        console.error("Error synthesizing spectrum:", err);
+      }
+    }
+
+    function updateUIWithSynthesis(data) {
+      if (!data || data.error) return;
+
+      const wns = data.wavenumbers;
+      const compWns = data.compressed_wavenumbers;
+      const abs = data.absorbance;
+      const d2 = data.second_derivative;
+      const bg = data.background_absorbance;
+      const cleanRef = currentTrial.clean_reference_absorbance;
+
+      chartFull.data.datasets[0].data = compWns.map((w, i) => ({ x: w, y: abs[i] }));
+      if (cleanRef) {
+        chartFull.data.datasets[1].data = compWns.map((w, i) => ({ x: w, y: cleanRef[i] }));
+      }
+      chartFull.data.datasets[2].data = compWns.map((w, i) => ({ x: w, y: bg[i] }));
+      chartFull.update();
+
+      const [wMin, wMax] = currentTrial.feature_window;
+      document.getElementById('disp-zoom-range').innerText = `${Math.round(wMin)}–${Math.round(wMax)} cm⁻¹`;
+
+      chartZoom.options.scales.x.min = wMin;
+      chartZoom.options.scales.x.max = wMax;
+
+      const zoomAbsData = [];
+      const zoomCleanData = [];
+      const zoomD2Data = [];
+      let minInZoom = 999.0;
+      let maxInZoom = -999.0;
+
+      for (let i = 0; i < wns.length; i++) {
+        if (wns[i] >= wMin - 20 && wns[i] <= wMax + 20) {
+          const yVal = abs[i];
+          zoomAbsData.push({ x: wns[i], y: yVal });
+          if (cleanRef) {
+            zoomCleanData.push({ x: wns[i], y: cleanRef[i] });
+          }
+          zoomD2Data.push({ x: wns[i], y: d2[i] });
+
+          if (yVal < minInZoom) minInZoom = yVal;
+          if (yVal > maxInZoom) maxInZoom = yVal;
+        }
+      }
+
+      if (autoYScaleZoom && zoomAbsData.length > 0) {
+        const span = Math.max(0.15, maxInZoom - minInZoom);
+        chartZoom.options.scales.yAbs.min = Math.max(-0.1, minInZoom - 0.12 * span);
+        chartZoom.options.scales.yAbs.max = maxInZoom + 0.18 * span;
+      } else {
+        chartZoom.options.scales.yAbs.min = -0.05;
+        chartZoom.options.scales.yAbs.max = 1.25;
+      }
+
+      chartZoom.data.datasets[0].data = zoomAbsData;
+      chartZoom.data.datasets[1].data = zoomCleanData;
+      chartZoom.data.datasets[2].data = zoomD2Data;
+      chartZoom.update();
+
+      const p = data.params;
+      document.getElementById('val-snr').innerText = p.snr.toFixed(1);
+      document.getElementById('val-rho').innerText = p.rho_0.toFixed(3);
+      document.getElementById('val-bsr').innerText = p.bsr.toFixed(2);
+      document.getElementById('val-zeta').innerText = (p.zeta_zero * 100).toFixed(1) + '%';
+      document.getElementById('val-tau').innerText = p.tau.toFixed(2);
+
+      const subRatio = p.sub_ratio !== undefined ? p.sub_ratio : 1.0;
+      document.getElementById('val-sub-ratio').innerText = subRatio.toFixed(2);
+      const subStatus = document.getElementById('val-sub-status');
+      if (subRatio < 0.85) {
+        subStatus.innerText = "Under-Subtracted (Bleed)";
+        subStatus.style.color = "#e3b341";
+      } else if (subRatio > 1.15) {
+        subStatus.innerText = "Over-Subtracted (Trough)";
+        subStatus.style.color = "#f85149";
+      } else {
+        subStatus.innerText = "Balanced Subtraction";
+        subStatus.style.color = "#3fb950";
+      }
+
+      const satFactor = p.sat_factor !== undefined ? (p.sat_factor * 100).toFixed(0) : "0";
+      document.getElementById('val-sat-factor').innerText = `${satFactor}%`;
+
+      const bioOrSpur = Math.max(p.biofilm_amp || 0, p.spurious_amp || 0);
+      document.getElementById('val-biofilm').innerText = bioOrSpur.toFixed(2);
+
+      if (data.bg_name) {
+        document.getElementById('val-bg-name').innerText = data.bg_name;
+      }
+
+      const feat = currentTrial.target_feature;
+      const prob = data.model_predictions[feat] !== undefined ? data.model_predictions[feat] : 0.5;
+      const phys = data.physical_scores[feat] !== undefined ? data.physical_scores[feat] : 0.5;
+
+      const pct = (prob * 100).toFixed(1);
+      document.getElementById('val-prob').innerText = `${pct}%`;
+      document.getElementById('prob-bar').style.width = `${pct}%`;
+      document.getElementById('val-phys-score').innerText = phys.toFixed(3);
+    }
+
+    function setBlindState(reveal) {
+      isModelRevealed = reveal;
+      const btn = document.getElementById('btn-toggle-blind');
+      const warning = document.getElementById('blind-warning');
+      const metrics = document.getElementById('model-metrics-area');
+
+      if (reveal) {
+        btn.innerText = "Hide Model Score (Blind)";
+        warning.style.display = "none";
+        metrics.style.display = "block";
+      } else {
+        btn.innerText = "Reveal Model Score";
+        warning.style.display = "block";
+        metrics.style.display = "none";
+      }
+    }
+
+    async function recordTrial(doesNotDegrade = false) {
+      if (!latestSynthesis) return;
+
+      const feat = currentTrial.target_feature;
+      const payload = {
+        polymer: currentTrial.polymer,
+        family: currentTrial.family,
+        target_feature: feat,
+        is_spurious_test: currentTrial.is_spurious_test,
+        mode: currentTrial.mode,
+        does_not_degrade: doesNotDegrade,
+        t_boundary: doesNotDegrade ? null : currentTrial.t,
+        params: latestSynthesis.params,
+        model_prediction: latestSynthesis.model_predictions[feat],
+        physical_score: latestSynthesis.physical_scores[feat],
+        seed: currentTrial.seed,
+        bg_idx: currentTrial.bg_idx
+      };
+
+      try {
+        const resp = await fetch('/api/record', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const res = await resp.json();
+        if (res.status === 'success') {
+          document.getElementById('stat-count').innerText = res.recorded_count;
+          sessionTrialCounts[feat] = (sessionTrialCounts[feat] || 0) + 1;
+
+          const activeBtn = doesNotDegrade ? document.getElementById('btn-no-degrade') : document.getElementById('btn-record');
+          const origText = activeBtn.innerHTML;
+          activeBtn.innerHTML = doesNotDegrade ? `🛡️ Recorded! Loading next...` : `✅ Saved Cutoff! Loading next...`;
+
+          setTimeout(async () => {
+            activeBtn.innerHTML = origText;
+            await loadTrial();
+          }, 450);
+        }
+      } catch (err) {
+        alert("Failed to record trial: " + err);
+      }
+    }
+
+    function adjustChartHeight(containerId, chartObj, deltaPx) {
+      const container = document.getElementById(containerId);
+      const currentH = container.clientHeight;
+      const newH = Math.max(180, Math.min(700, currentH + deltaPx));
+      container.style.height = `${newH}px`;
+      chartObj.resize();
+    }
+
+    function setChartHeight(containerId, chartObj, exactPx) {
+      const container = document.getElementById(containerId);
+      container.style.height = `${exactPx}px`;
+      chartObj.resize();
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      initCharts();
+      await initTaxonomyDropdowns();
+
+      const slider = document.getElementById('slider-t');
+      slider.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(synthesizeAndRender, 15);
+      });
+
+      // Polymer Family change -> updates Feature dropdown and loads first feature in family
+      document.getElementById('sel-family').addEventListener('change', (e) => {
+        const fam = e.target.value;
+        currentTrial.family = fam;
+        populateFeaturesForFamily(fam);
+        currentTrial.target_feature = document.getElementById('sel-feature').value;
+        loadTrial({ lockFeature: true });
+      });
+
+      // Specific Peak/Combination change -> automatically draws a relevant polymer for that feature
+      document.getElementById('sel-feature').addEventListener('change', (e) => {
+        currentTrial.target_feature = e.target.value;
+        loadTrial({ lockFeature: true });
+      });
+
+      document.getElementById('sel-mode').addEventListener('change', (e) => {
+        if (e.target.value !== 'random') {
+          currentTrial.mode = e.target.value;
+          document.getElementById('stat-mode').innerText = e.target.value;
+          synthesizeAndRender();
+        } else {
+          loadTrial({ lockFeature: true });
+        }
+      });
+
+      document.getElementById('btn-full-h-up').addEventListener('click', () => adjustChartHeight('container-chart-full', chartFull, 50));
+      document.getElementById('btn-full-h-down').addEventListener('click', () => adjustChartHeight('container-chart-full', chartFull, -50));
+      document.getElementById('btn-zoom-h-up').addEventListener('click', () => adjustChartHeight('container-chart-zoom', chartZoom, 60));
+      document.getElementById('btn-zoom-h-down').addEventListener('click', () => adjustChartHeight('container-chart-zoom', chartZoom, -60));
+      document.getElementById('btn-zoom-h-tall').addEventListener('click', () => setChartHeight('container-chart-zoom', chartZoom, 480));
+
+      const btnAutoY = document.getElementById('btn-zoom-autoy');
+      const btnFixedY = document.getElementById('btn-zoom-fixedy');
+      btnAutoY.addEventListener('click', () => {
+        autoYScaleZoom = true;
+        btnAutoY.classList.add('active');
+        btnFixedY.classList.remove('active');
+        synthesizeAndRender();
+      });
+      btnFixedY.addEventListener('click', () => {
+        autoYScaleZoom = false;
+        btnFixedY.classList.add('active');
+        btnAutoY.classList.remove('active');
+        synthesizeAndRender();
+      });
+
+      document.getElementById('chk-clean-show').addEventListener('change', (e) => {
+        chartFull.data.datasets[1].hidden = !e.target.checked;
+        chartFull.update();
+      });
+      document.getElementById('chk-zoom-clean-show').addEventListener('change', (e) => {
+        chartZoom.data.datasets[1].hidden = !e.target.checked;
+        chartZoom.update();
+      });
+      document.getElementById('chk-bg-show').addEventListener('change', (e) => {
+        chartFull.data.datasets[2].hidden = !e.target.checked;
+        chartFull.update();
+      });
+      document.getElementById('chk-corridors-show').addEventListener('change', (e) => {
+        showCorridors = e.target.checked;
+        chartFull.update();
+        chartZoom.update();
+      });
+      document.getElementById('chk-d2-show').addEventListener('change', (e) => {
+        chartZoom.data.datasets[2].hidden = !e.target.checked;
+        chartZoom.update();
+      });
+
+      document.getElementById('btn-toggle-blind').addEventListener('click', () => {
+        setBlindState(!isModelRevealed);
+      });
+
+      document.getElementById('btn-record').addEventListener('click', () => recordTrial(false));
+      document.getElementById('btn-no-degrade').addEventListener('click', () => recordTrial(true));
+      document.getElementById('btn-next-trajectory').addEventListener('click', () => loadTrial({ lockFeature: true }));
+      document.getElementById('btn-switch-feature').addEventListener('click', () => loadTrial({ nextInGroup: true }));
+
+      // Review Modal & History Logic
+      const modal = document.getElementById('review-modal');
+      const btnOpenReview = document.getElementById('btn-open-review');
+      const btnCloseModal = document.getElementById('btn-close-modal');
+
+      async function openReviewModal() {
+        modal.classList.add('open');
+        await loadAndRenderHistory();
+      }
+      function closeReviewModal() {
+        modal.classList.remove('open');
+      }
+      btnOpenReview.addEventListener('click', openReviewModal);
+      btnCloseModal.addEventListener('click', closeReviewModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeReviewModal();
+      });
+
+      async function loadAndRenderHistory() {
+        try {
+          const resp = await fetch('/api/history');
+          const data = await resp.json();
+
+          const tallyGrid = document.getElementById('modal-tally-grid');
+          tallyGrid.innerHTML = '';
+
+          const totalCard = document.createElement('div');
+          totalCard.className = 'tally-card';
+          totalCard.style.borderColor = 'rgba(250, 204, 21, 0.5)';
+          totalCard.innerHTML = `
+            <div class="tally-card-title">All Completed Trials</div>
+            <div class="tally-card-val" style="color:var(--accent-green);">${data.total_count}</div>
+            <div class="tally-card-sub">${data.outcomes.perceptual_breakdown || 0} cutoff / ${data.outcomes.observable_throughout || 0} resilient</div>
+          `;
+          tallyGrid.appendChild(totalCard);
+
+          Object.entries(data.tallies || {}).forEach(([fk, count]) => {
+            const card = document.createElement('div');
+            card.className = 'tally-card';
+            card.innerHTML = `
+              <div class="tally-card-title">${fk}</div>
+              <div class="tally-card-val">${count}</div>
+              <div class="tally-card-sub">Recorded trials</div>
+            `;
+            tallyGrid.appendChild(card);
+          });
+
+          const tbody = document.getElementById('modal-review-tbody');
+          tbody.innerHTML = '';
+          const recs = data.records || [];
+
+          if (recs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:16px; color:#8b949e;">No trials recorded yet.</td></tr>`;
+            return;
+          }
+
+          recs.slice().reverse().forEach(r => {
+            const tr = document.createElement('tr');
+            const isAnomaly = (r.t_boundary !== null && r.t_boundary <= 0.001);
+            if (isAnomaly) tr.className = 'row-anomaly';
+
+            const p = r.params_at_boundary || {};
+            const snr = p.snr ? p.snr.toFixed(1) : '-';
+            const rho = p.rho_0 ? p.rho_0.toFixed(2) : '-';
+            const bsr = p.bsr ? p.bsr.toFixed(1) : '-';
+
+            const tDisplay = r.does_not_degrade
+              ? `<span style="color:#58a6ff; font-weight:600;">Resilient (DND)</span>`
+              : `<span style="font-weight:bold; ${isAnomaly ? 'color:#f85149;' : 'color:#facc15;'}">t = ${r.t_boundary.toFixed(3)} ${isAnomaly ? '⚠️ (t=0)' : ''}</span>`;
+
+            const outcomeBadge = r.does_not_degrade
+              ? `<span style="color:#56d364;">Observable</span>`
+              : `<span style="color:#e3b341;">${r.outcome || 'Cutoff'}</span>`;
+
+            tr.innerHTML = `
+              <td style="font-family:monospace; color:#8b949e;">#${r.index}</td>
+              <td style="font-weight:600; color:#c9d1d9;">${r.target_feature}</td>
+              <td><span class="target-poly" style="font-size:0.7rem; padding:2px 6px;">${r.polymer}</span></td>
+              <td style="font-family:monospace; font-size:0.75rem; color:#8b949e;">${r.mode}</td>
+              <td>${outcomeBadge}</td>
+              <td>${tDisplay}</td>
+              <td style="font-family:monospace; font-size:0.72rem; color:#8b949e;">SNR:${snr} | ρ₀:${rho} | BSR:${bsr}</td>
+              <td>
+                <button class="btn-delete-row" title="Delete trial #${r.index}">🗑️ Del</button>
+              </td>
+            `;
+
+            tr.querySelector('.btn-delete-row').addEventListener('click', async () => {
+              if (confirm(`Delete trial #${r.index} (${r.target_feature}, t=${r.t_boundary})?`)) {
+                await deleteTrial(r.index);
+              }
+            });
+
+            tbody.appendChild(tr);
+          });
+        } catch (err) {
+          console.error("Failed to load history:", err);
+        }
+      }
+
+      async function deleteTrial(index) {
+        try {
+          const resp = await fetch('/api/delete_trial', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ index })
+          });
+          const res = await resp.json();
+          if (res.status === 'success') {
+            document.getElementById('stat-count').innerText = res.remaining_count;
+            await loadAndRenderHistory();
+          }
+        } catch (err) {
+          alert("Delete failed: " + err);
+        }
+      }
+
+      fetch('/api/history').then(r => r.json()).then(data => {
+        document.getElementById('stat-count').innerText = data.total_count;
+        sessionTrialCounts = data.tallies || {};
+      }).catch(() => {});
+
+      window.addEventListener('keydown', (e) => {
+        if (modal.classList.contains('open')) {
+          if (e.key === 'Escape') closeReviewModal();
+          return;
+        }
+        if (e.code === 'Space') {
+          e.preventDefault();
+          recordTrial(false);
+        } else if (e.code === 'KeyD') {
+          e.preventDefault();
+          recordTrial(true);
+        } else if (e.key === 'ArrowRight' || e.code === 'ArrowRight') {
+          e.preventDefault();
+          const currentVal = parseFloat(slider.value);
+          const stepVal = e.shiftKey ? 0.02 : 0.005;
+          slider.value = Math.min(1.0, currentVal + stepVal).toFixed(3);
+          synthesizeAndRender();
+        } else if (e.key === 'ArrowLeft' || e.code === 'ArrowLeft') {
+          e.preventDefault();
+          const currentVal = parseFloat(slider.value);
+          const stepVal = e.shiftKey ? 0.02 : 0.005;
+          slider.value = Math.max(0.0, currentVal - stepVal).toFixed(3);
+          synthesizeAndRender();
+        }
+      });
+
+      await loadTrial({ lockFeature: true });
+    });
+  </script>
+</body>
+</html>
